@@ -1,0 +1,134 @@
+{% extends "default.html" %}
+
+{% block head %}
+<meta name="description" content="{{ page.description }}" />
+<meta name="author" content="Tomas Petricek" />
+<meta property="og:title" content="{{ page.title }}: {{ page.subtitle }}" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://thegamma.net{{ page.permalink }}" />
+<meta property="og:image" content="http://thegamma.net/img/logo.png" />  
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@thegamma_net" />
+<meta name="twitter:title" content="{{ page.title }}: {{ page.subtitle }}" />
+<meta name="twitter:description" content="{{ page.description }}" />
+<meta name="twitter:image" content="http://thegamma.net/img/logo.png" />  
+<title>{{ model.title }} | The Gamma Snippets</title>
+
+<link href="http://thegamma.net/lib/thegamma/thegamma.css" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<script type="text/thegamma" id="demo">{{ model.code }}</script>
+
+<header>
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12 col-md-10 col-lg-8">
+      <h1><span><strong>The Gamma</strong>: {{ model.title }}</span></h1>
+      <p>{{ model.description }}</p>
+      <p>This snippet has been shared {{ model.posted | niceDate }} by <strong>{{ model.author }}</strong>.
+      {% if model.twitter == null %}{% else %}You can contact the author via Twitter at <a href="https://twitter.com/{{ model.twitter }}">{{ model.twitter }}</a>.{% endif %}
+      {% if model.link == null %}{% else %}For more information, see the <a href="{{ model.link }}">author's web page</a>.{% endif %}</p>
+    </div>
+  </div>
+</div>
+</header>
+  
+<article>
+<div class="container">
+  
+<div class="row">
+  <div class="col-md-1"></div>
+  <div class="col-md-10">
+    <div class="shadow">
+    <div id="out1" class="output">
+      <div class="placeholder">
+        Loading the visualization...
+      </div>
+    </div>
+    </div>
+  </div>
+  <div class="col-md-1"></div>
+</div>
+  
+<script type="text/javascript">
+function switchTabs(idx) {
+  for(var i=0; i<=1; i++) document.getElementById("tab_" + i).className = "tab";
+  for(var i=0; i<=1; i++) document.getElementById("tab_body_" + i).style.display = "none";
+  document.getElementById("tab_body_" + idx).style.display = "block";
+  document.getElementById("tab_" + idx).className = "tab-sel tab";
+}
+</script>
+<div class="row" style="margin-top:50px"><div class="col-sm-12">
+  <div class="tabs">
+    <div class="tab-sel tab" id="tab_0" onclick="switchTabs(0);"><i class="fa fa-code"></i> Fork the snippet</div>
+    <div class="tab" id="tab_1" onclick="switchTabs(1);"><i class="fa fa-share-alt"></i> Embed the snippet</div>
+  </div>
+  <div class="shadow" style="background:white;min-height:800px">
+    <div class="tab-body" id="tab_body_0">
+      <div id="ed1"></div>
+    </div>
+    <div class="tab-body" id="tab_body_1" style="display:none">
+      tt
+    </div>
+  </div>
+</div></div>
+
+</div>
+</article>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.js" 
+  integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
+  integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="http://thegamma.net/lib/thegamma/babel.min.js"></script>
+<script src="http://thegamma.net/lib/thegamma/require.js"></script>
+<script>
+  require.config({
+    paths:{'vs':'http://thegamma.net/lib/thegamma/vs'},
+    map:{ "*":{"monaco":"vs/editor/editor.main"}}
+  });
+  require(["monaco", "http://thegamma.net/lib/thegamma/thegamma.js"], function (_, g) {      
+    var services = "http://thegamma-services.azurewebsites.net/";      
+    var providers = 
+      g.providers.createProviders({ 
+        "libraries": g.providers.library("http://thegamma.net/lib/thegamma/libraries.json"),
+        "olympics": g.providers.pivot(services + "pdata/olympics") });
+        
+    // Create context which is used to create editor & run code
+    var ctx = g.gamma.createContext(providers);
+    ctx.errorsReported(function (errs) { 
+      var lis = errs.slice(0, 5).map(function (e) { 
+        return $("<li>")
+          .append($("<span class='err'>error " + e.number + "<span>"))
+          .append($("<span class='loc'>at line " + e.startLine + " col " + e.startColumn + "</span>"))
+          .append(": " + e.message);          
+      });        
+      var ul = $("<ul>").append(lis);
+      $("#ed1-errors").empty().append(ul);
+    });
+
+    // Get sample code and run it; use the '#out1' element for outputs
+    var code = document.getElementById("demo").innerText;
+    ctx.evaluate(code, "out1");
+
+    // Options passed to the editor - specify size & configuration function
+    // that sets properties directly for the Monaco editor
+    var opts =
+      { autoHeight: true,
+        maxHeight: 1000,
+        monacoOptions: function(m) {
+          m.fontFamily = "Inconsolata";
+          m.fontSize = 15;
+          m.lineHeight = 20;
+          m.lineNumbers = false;
+        } };
+
+    // We create editor lazily when the "Edit source code" button is clicked the first time
+    var editor = ctx.createEditor("ed1", code, opts);
+  
+    //code = editor.getValue();
+    // ctx.evaluate(code, "out1");
+  });
+</script>
+{% endblock %}
