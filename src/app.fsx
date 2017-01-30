@@ -94,7 +94,7 @@ let postSnippet (snip:NewSnippet) = async {
 type SnippetMessage = 
   | GetSnippet of int * AsyncReplyChannel<Snippet option>
   | ListSnippets of int * AsyncReplyChannel<Snippet[]>
-  | InsertSnippet of NewSnippet
+  | InsertSnippet of NewSnippet * AsyncReplyChannel<int>
 
 let snippetAgent = MailboxProcessor.Start(fun inbox ->
   let rec loop snips = async {
@@ -104,10 +104,11 @@ let snippetAgent = MailboxProcessor.Start(fun inbox ->
         ch.Reply(snips|> Array.tryFind (fun s -> s.id = id))
         return! loop snips
     | ListSnippets(max, ch) ->
-        ch.Reply([| for i in 0 .. 20 do yield! snips |] |> Array.truncate max)
+        ch.Reply(snips |> Array.truncate max)
         return! loop snips
-    | InsertSnippet snip ->
+    | InsertSnippet(snip, ch) ->
         let! snip = postSnippet snip
+        ch.Reply(snip.id)
         return! loop (Array.append [| snip |] snips) }
   async { 
     while true do
@@ -146,6 +147,61 @@ module Filters =
     else sprintf "%d years ago" (int ts.TotalDays / 365)
 
 // --------------------------------------------------------------------------------------
+// Insert page
+// --------------------------------------------------------------------------------------
+
+type RecaptchaResponse = JsonProvider<"""{"success":true}""">
+
+#if INTERACTIVE
+#load "config.fs"
+let recaptchaSecret = Config.TheGammaRecaptcha
+#else
+let recaptchaSecret = Environment.GetEnvironmentVariable("RECAPTCHA_SECRET")
+#endif
+
+/// Validates that reCAPTCHA has been entered properly
+let validateRecaptcha form = async {
+  let formValue = form |> Seq.tryPick (fun (k, v) -> 
+      if k = "g-recaptcha-response" then v else None)
+  let response = defaultArg formValue ""
+  let! response = 
+      Http.AsyncRequestString
+        ( "https://www.google.com/recaptcha/api/siteverify", httpMethod="POST", 
+          body=HttpRequestBody.FormValues ["secret", recaptchaSecret; "response", response])
+  return RecaptchaResponse.Parse(response).Success }
+
+let error msg = 
+  DotLiquid.page "error.html" msg >=> Writers.setStatus HttpCode.HTTP_400
+  
+let (|Lookup|_|) k map = Map.tryFind k map
+let (|NonEmpty|_|) v = if String.IsNullOrWhiteSpace(v) then None else Some v
+  
+let insertPage ctx = async {
+  // Give up early if the reCAPTCHA was not correct
+  let! valid = validateRecaptcha ctx.request.form
+  if not valid then return! error """Human validation using ReCaptcha failed. Please ensure
+    that your browser supports ReCaptcha and checkt the checkbox to verify you are a human.""" ctx
+  else
+    let form = Map.ofSeq [ for k, v in ctx.request.form do if v.IsSome then yield k.ToLower(), v.Value ] 
+    match form with
+    | Lookup "title" (NonEmpty title) &
+      Lookup "description" (NonEmpty descr) &
+      Lookup "source" (NonEmpty source) &
+      Lookup "author" (NonEmpty author) &
+      Lookup "link" link & Lookup "twitter" twitter ->
+        let newSnip = 
+          { title = title; description = descr; author = author;
+            twitter = twitter.TrimStart('@'); link = link; compiled = ""; code = source;
+            hidden = false; config = ""; version = "0.0.6" } 
+        let! id = snippetAgent.PostAndAsyncReply(fun ch -> InsertSnippet(newSnip, ch))
+        let url = sprintf "/%d/%s" id (Filters.cleanTitle title)
+        return! Redirection.FOUND url ctx
+    | _ ->
+        return! error """Some of the inputs for the snippet were not valid, but the client-side 
+          checking did not catch that. If you have JavaScript enabled and did not try to trick us,
+          please consider opening an issue!""" ctx }
+    
+// --------------------------------------------------------------------------------------
 // Web server
 // --------------------------------------------------------------------------------------
 
@@ -164,6 +220,8 @@ let app = request (fun _ ->
   inits.Value
   choose [
     path "/" >=> asyncPage "home.html" (snippetAgent.PostAndAsyncReply(fun ch -> ListSnippets(8, ch)))
+    path "/new" >=> DotLiquid.page "new.html" null
+    path "/insert" >=> insertPage
     path "/all" >=> asyncPage "home.html" (snippetAgent.PostAndAsyncReply(fun ch -> ListSnippets(Int32.MaxValue, ch)))
     pathScan "/%d/%s" (fun (id, _) ctx -> async {
       let! snip = snippetAgent.PostAndAsyncReply(fun ch -> GetSnippet(id, ch))

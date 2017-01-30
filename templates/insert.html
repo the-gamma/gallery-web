@@ -1,0 +1,84 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.js" 
+  integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
+  integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="https://thegamma.net/lib/thegamma/babel.min.js"></script>
+<script src="https://thegamma.net/lib/thegamma/require.js"></script>
+<script>
+  require.config({
+    paths:{'vs':'https://thegamma.net/lib/thegamma/vs'},
+    map:{ "*":{"monaco":"vs/editor/editor.main"}}
+  });
+
+  var editor;
+  
+  function validateForm() {
+    document.getElementById("source").value = editor.getValue();
+    var elems = ["title","description","source","author"];
+    var valid = true;
+    for(var i = 0; i < elems.length; i++) {
+      var elemValid = document.getElementById(elems[i]).value.trim() != "";
+      document.getElementById(elems[i]+"_error").style.display = elemValid ? "none" : "block";
+      valid = valid && elemValid;
+    }
+    var reValid = grecaptcha.getResponse().length > 0;
+    valid = valid && reValid;
+    document.getElementById("human_error").style.display = reValid ? "none" : "block";
+    return valid;
+  }
+  
+  function switchTabs(idx) {
+    for(var i=0; i<=1; i++) document.getElementById("tab_" + i).className = "tab";
+    for(var i=0; i<=1; i++) document.getElementById("tab_body_" + i).style.display = "none";
+    document.getElementById("tab_body_" + idx).style.display = "block";
+    document.getElementById("tab_" + idx).className = "tab-sel tab";
+    document.getElementById("source").value = editor.getValue();
+  }
+
+  require(["monaco", "https://thegamma.net/lib/thegamma/thegamma.js"], function (_, g) {      
+    var services = "https://thegamma-services.azurewebsites.net/";      
+    var providers = 
+      g.providers.createProviders({ 
+        "libraries": g.providers.library("https://thegamma.net/lib/thegamma/libraries.json"),
+        "olympics": g.providers.pivot(services + "pdata/olympics") });
+        
+    // Create context which is used to create editor & run code
+    var ctx = g.gamma.createContext(providers);
+    ctx.errorsReported(function (errs) { 
+      var lis = errs.slice(0, 5).map(function (e) { 
+        return $("<li>")
+          .append($("<span class='err'>error " + e.number + "<span>"))
+          .append($("<span class='loc'>at line " + e.startLine + " col " + e.startColumn + "</span>"))
+          .append(": " + e.message);          
+      });        
+      var ul = $("<ul>").append(lis);
+      $("#ed1-errors").empty().append(ul);
+    });
+
+    // Get sample code and run it; use the '#out1' element for outputs
+    var demo = document.getElementById("demo");
+    var code = demo == null ? 'placeholder.create("Add the source code for your visualization!")' : demo.innerText;
+    if (demo != null) ctx.evaluate(code, "out1");
+    
+    // Setup handler for run button
+    document.getElementById("run").onclick = function() {
+      ctx.evaluate(editor.getValue(), "out1");
+      return false;
+    }
+
+    // Options passed to the editor - specify size & configuration function
+    // that sets properties directly for the Monaco editor
+    var opts =
+      { autoHeight: true,
+        maxHeight: 1000,
+        monacoOptions: function(m) {
+          m.fontFamily = "Inconsolata";
+          m.fontSize = 15;
+          m.lineHeight = 20;
+          m.lineNumbers = false;
+        } };
+
+    // We create editor lazily when the "Edit source code" button is clicked the first time
+    editor = ctx.createEditor("ed1", code, opts);
+  });
+</script>

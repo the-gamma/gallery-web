@@ -278,3 +278,20 @@ header a {
   z-index:1000;
   background:white;
 }
+form {
+  padding-top:20px;
+}
+#submit {
+  margin-top:10px;
+}
+.form-group {
+  padding-right:20px;
+}
+.submit-group {
+  text-align:right;
+}
+.error {
+  color:#ff0000;
+  padding:3px 0px 0px 5px;
+  display:none;
+}

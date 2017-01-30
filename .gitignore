@@ -13,3 +13,4 @@ temp
 bin
 obj
 debug.log
+src/config.fs

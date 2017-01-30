@@ -55,7 +55,7 @@
           <p>{{ item.description }}</p>
           <p><strong>Posted:</strong> {{ item.posted | niceDate }} by 
           {{ item.author }}<br />
-          {% if item.twitter == null %}{% else %}<a href="https://twitter.com/{{ item.twitter }}">{{ item.twitter }}</a>{% endif %}
+          {% if item.twitter == null %}{% else %}<a href="https://twitter.com/{{ item.twitter }}">@{{ item.twitter }}</a>{% endif %}
           {% unless item.link == null or item.twitter == null %} | {% endunless %}
           {% if item.link == null %}{% else %}<a href="{{ item.link }}">more information</a>{% endif %}</p>
         </li>
@@ -73,7 +73,7 @@
           <p>{{ item.description }}</p>
           <p><strong>Posted:</strong> {{ item.posted | niceDate }} by 
           {{ item.author }}<br />
-          {% if item.twitter == null %}{% else %}<a href="https://twitter.com/{{ item.twitter }}">{{ item.twitter }}</a>{% endif %}
+          {% if item.twitter == null %}{% else %}<a href="https://twitter.com/{{ item.twitter }}">@{{ item.twitter }}</a>{% endif %}
           {% unless item.link == null or item.twitter == null %} | {% endunless %}
           {% if item.link == null %}{% else %}<a href="{{ item.link }}">more information</a>{% endif %}</p>
         </li>
