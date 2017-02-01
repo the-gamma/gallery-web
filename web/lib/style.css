@@ -10,10 +10,10 @@
 }
 
 body, .modal-content { 
-  background:url(http://thegamma.net/img/bg.png);
+  background:url(https://thegamma.net/img/bg.png);
 }
 header {
-  background:url(http://thegamma.net/img/bg.png);
+  background:url(https://thegamma.net/img/bg.png);
   padding:50px 0px 40px 0px;
 }
 header h1 {
@@ -48,7 +48,7 @@ header p strong {
 }
 
 footer {
-  background:url(http://thegamma.net/img/bg.png);
+  background:url(https://thegamma.net/img/bg.png);
   padding:30px 0px 70px 0px;
 }
 footer p {
