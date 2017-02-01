@@ -38,7 +38,7 @@
 <article>
 <div class="container">
   
-<div class="row">
+<div class="row thegamma">
   <div class="col-md-1"></div>
   <div class="col-md-10">
     <div class="shadow">
@@ -60,10 +60,10 @@
   </div>
   <div class="shadow" style="background:white;min-height:800px">
     
-    <div class="tab-body" id="tab_body_0">
+    <div class="tab-body thegamma" id="tab_body_0">
       <div id="ed1"></div>
       <div id="ed1-errors" class="errors"></div>
-      <div style="padding:10px 0px 20px 10px"><button id="run" class="btn btn-success">Run snippet</button></div>
+      <div style="padding:20px 0px 0px 10px"><button id="run" class="btn btn-success">Run snippet</button></div>
     </div>
     
     <div class="tab-body" id="tab_body_1" style="display:none">
@@ -122,8 +122,25 @@
       </form>
     </div>
     
-    <div class="tab-body" id="tab_body_2" style="display:none">
-      tt
+    <div class="tab-body" id="tab_body_2" style="display:none;padding:30px">
+      <textarea readonly="readonly" class="form-control" rows="5" style="width:100%;font:11pt Inconsolata" id="embedcode">
+&lt;script type="text/thegamma" id="s{{ model.id }}-code"&gt;
+{{ model.code }}
+&lt;/script&gt;
+&lt;div class="thegamma" id="s{{ model.id }}"&gt;&lt;/div&gt;
+
+&lt;script type="text/javascript"&gt;
+if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma/";
+[tg+"babel.min.js",tg+"require.js",tg+"embed.js","https://www.google.com/jsapi"].forEach
+  (function(u) { document.write('&lt;sc'+'ript type="text/javascript" src="'+u+'"&gt;&lt;/sc'+'ript&gt;'); }); 
+} thegamma.push("s{{ model.id }}");
+&lt;/script&gt;</textarea>
+    <p style="color:#808080; margin-top:20px">To embed the snippet on your web page, just copy &amp; paste the   
+      above HTML code into your web page. The first part includes the code of the snippet. You can
+      modify this later if you wish. The second part loads The Gamma and needs to be included at
+      least once per page. For most efficient loading, put it at the end of your document. If
+      you need more control, you can use <a href="http://thegamma.net/developers/">The Gamma as a 
+      stand-alone JavaScript component</a>.</p>
     </div>
   </div>
 </div></div>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+</head>
+<body>
+
+<script type="text/thegamma" id="s23-code">
+let data =
+  olympics
+    .'filter data'.'Games is'.'Rio (2016)'.then
+    .'group data'.'by Athlete'.'sum Gold'.then
+    .'sort data'.'by Gold descending'.then
+    .paging.take(8)
+    .'get series'.'with key Athlete'.'and value Gold'
+  
+chart.column(data).legend(position="none")
+  .set(fontName="Roboto", fontSize=14)
+  .set(colors=["#F4C300"], title="Top medalists (by number of gold medals) at Rio 2016")
+</script>
+<div class="thegamma" id="s23"></div>
+
+<script type="text/javascript">
+if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma/";
+[tg+"babel.min.js",tg+"require.js",tg+"embed.js","https://www.google.com/jsapi"].forEach
+  (function(u) { document.write('<sc'+'ript type="text/javascript" src="'+u+'"></sc'+'ript>'); }); 
+} thegamma.push("s23");
+</script>
+  
+  
+</body>
+</html>

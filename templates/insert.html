@@ -28,14 +28,17 @@
   }
   
   function switchTabs(idx) {
-    for(var i=0; i<=1; i++) document.getElementById("tab_" + i).className = "tab";
-    for(var i=0; i<=1; i++) document.getElementById("tab_body_" + i).style.display = "none";
+    for(var i=0; i<=2; i++) document.getElementById("tab_" + i).className = "tab";
+    for(var i=0; i<=2; i++) document.getElementById("tab_body_" + i).style.display = "none";
     document.getElementById("tab_body_" + idx).style.display = "block";
     document.getElementById("tab_" + idx).className = "tab-sel tab";
     document.getElementById("source").value = editor.getValue();
+    
+    var ea = document.getElementById("embedcode");
+    if (ea && idx==2) { ea.style.height = (ea.scrollHeight + 10) + "px"; }
   }
 
-  require(["monaco", "https://thegamma.net/lib/thegamma/thegamma.js"], function (_, g) {      
+  require(["monaco", "http://localhost:4000/lib/thegamma/thegamma.js"], function (_, g) {      
     var services = "https://thegamma-services.azurewebsites.net/";      
     var providers = 
       g.providers.createProviders({ 
@@ -47,7 +50,7 @@
     ctx.errorsReported(function (errs) { 
       var lis = errs.slice(0, 5).map(function (e) { 
         return $("<li>")
-          .append($("<span class='err'>error " + e.number + "<span>"))
+          .append($("<span class='err'>error " + e.number + "</span>"))
           .append($("<span class='loc'>at line " + e.startLine + " col " + e.startColumn + "</span>"))
           .append(": " + e.message);          
       });        
