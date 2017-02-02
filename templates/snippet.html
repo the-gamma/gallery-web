@@ -25,7 +25,7 @@
 <div class="container">
   <div class="row">
     <div class="col-sm-12 col-md-10 col-lg-8">
-      <h1><span><strong>The Gamma</strong>: {{ model.title }}</span></h1>
+      <a href="/"><h1><span><strong>The Gamma</strong>: {{ model.title }}</span></h1></a>
       <p>{{ model.description }}</p>
       <p>This snippet has been shared {{ model.posted | niceDate }} by <strong>{{ model.author }}</strong>.
       {% if model.twitter == null %}{% else %}You can contact the author via Twitter at <a href="https://twitter.com/{{ model.twitter }}">@{{ model.twitter }}</a>.{% endif %}

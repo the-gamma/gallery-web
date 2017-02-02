@@ -18,18 +18,28 @@ header {
 }
 header h1 {
   font:400 24pt Kreon,'Times New Roman',times,serif;
-  margin:0px 0px 50px 0px;
+  margin:0px 0px 30px 0px;
   line-height:34pt;
 }
 header h2 {
   font:300 18pt Kreon,'Times New Roman',times,serif;
   line-height:28pt;
-  margin:30px 0px 30px 0px;
+  margin:20px 30px 20px 0px;
+  display:inline-block;
+}
+header h3 {
+  font:400 18pt Kreon,'Times New Roman',times,serif;
+  line-height:28pt;
+  margin:0px 0px 5px 0px;
+  color:#e8e8e8;
 }
 header h1 span, header h2 span {
   padding:4px 10px 4px 10px;
   background:#F4C300;
   color:black;
+}
+header h2 span {
+  padding:4px 15px 4px 15px;
 }
 header p {
   font:14pt 'Roboto',sans-serif;
@@ -41,12 +51,12 @@ header p strong {
   font-weight:500;
   color:#e8e8e8;
 }
-@media screen and (max-width:768px) {
-  header h2 {
-    margin:0px 0px 30px 0px;
-  }
+header a:hover h2 span, header a:hover h1 span {
+  background:#EFD47C;
 }
-
+header a, header a:hover {
+  text-decoration:none !important;
+}
 footer {
   background:url(https://thegamma.net/img/bg.png);
   padding:30px 0px 70px 0px;
