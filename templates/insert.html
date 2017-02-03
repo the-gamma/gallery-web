@@ -2,6 +2,7 @@
   integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
   integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="https://thegamma.net/lib/thegamma/d3v4.js"></script>
 <script src="https://thegamma.net/lib/thegamma/babel.min.js"></script>
 <script src="https://thegamma.net/lib/thegamma/require.js"></script>
 <script>
@@ -43,6 +44,7 @@
     var providers = 
       g.providers.createProviders({ 
         "libraries": g.providers.library("https://thegamma.net/lib/thegamma/libraries.json"),
+        "worldbank": g.providers.rest(services + "worldbank"),
         "olympics": g.providers.pivot(services + "pdata/olympics") });
         
     // Create context which is used to create editor & run code

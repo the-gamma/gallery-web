@@ -4,28 +4,18 @@
 </head>
 <body>
 
-<script type="text/thegamma" id="s23-code">
-let data =
-  olympics
-    .'filter data'.'Games is'.'Rio (2016)'.then
-    .'group data'.'by Athlete'.'sum Gold'.then
-    .'sort data'.'by Gold descending'.then
-    .paging.take(8)
-    .'get series'.'with key Athlete'.'and value Gold'
-  
-chart.column(data).legend(position="none")
-  .set(fontName="Roboto", fontSize=14)
-  .set(colors=["#F4C300"], title="Top medalists (by number of gold medals) at Rio 2016")
+<script type="text/thegamma" id="s26-code">
+let co = worldbank.byCountry.'United States'.'Climate Change'.'CO2 emissions (kt)'.skip(20)
+youdraw.create(co)  
 </script>
-<div class="thegamma" id="s23"></div>
+<div class="thegamma" id="s26"></div>
 
 <script type="text/javascript">
 if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma/";
-["//www.google.com/jsapi",tg+"babel.min.js",tg+"core-js.min.js",tg+"require.js",tg+"embed.js"].
+["//www.google.com/jsapi",tg+"d3v4.js",tg+"babel.min.js",tg+"core-js.min.js",tg+"require.js",tg+"embed.js"].
  forEach(function(u) { document.write('<sc'+'ript type="text/javascript" src="'+u+'"></sc'+'ript>'); }); 
-} thegamma.push("s23");
+} thegamma.push("s26");
 </script>
-  
   
 </body>
 </html>
