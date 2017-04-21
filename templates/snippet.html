@@ -14,7 +14,7 @@
 <meta name="twitter:image" content="https://thegamma.net/img/logo.png" />  
 <title>{{ model.title }} | The Gamma Gallery</title>
 
-<link href="https://thegamma.net/lib/thegamma/thegamma.css" rel="stylesheet">
+<link href="https://thegamma.net/lib/thegamma-0.0.18/thegamma.css" rel="stylesheet">
 <script src='https://www.google.com/recaptcha/api.js'></script>
 {% endblock %}
 
@@ -130,7 +130,7 @@
 &lt;div class="thegamma" id="s{{ model.id }}"&gt;&lt;/div&gt;
 
 &lt;script type="text/javascript"&gt;
-if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma/";
+if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-0.0.18/";
 ["//www.google.com/jsapi",tg+"babel.min.js",tg+"core-js.min.js",tg+"require.js",tg+"embed.js"].
  forEach(function(u) { document.write('&lt;sc'+'ript type="text/javascript" src="'+u+'"&gt;&lt;/sc'+'ript&gt;'); }); 
 } thegamma.push("s{{ model.id }}");

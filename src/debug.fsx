@@ -53,6 +53,7 @@ let reloadScript () =
 
 let getLocalServerConfig port =
   { defaultConfig with
+      maxContentLength = 1024 * 1024 * 50
       homeFolder = Some __SOURCE_DIRECTORY__
       logger = Logging.Targets.create Logging.LogLevel.Debug [||]
       bindings = [ HttpBinding.createSimple HTTP  "127.0.0.1" port ] }

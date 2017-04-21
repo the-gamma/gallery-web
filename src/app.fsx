@@ -17,6 +17,13 @@ open Suave.Operators
 open Newtonsoft.Json
 open FSharp.Data
 
+#if INTERACTIVE
+#load "config.fs"
+let recaptchaSecret = Config.TheGammaRecaptcha
+#else
+let recaptchaSecret = Environment.GetEnvironmentVariable("RECAPTCHA_SECRET")
+#endif
+
 let (</>) a b = IO.Path.Combine(a, b)
 
 let asm, debug = 
@@ -65,8 +72,6 @@ module Filters =
 
 let serializer = JsonSerializer.Create()
 
-let (|Let|) v input = v, input
-
 let fromJson<'R> str : 'R = 
   use tr = new System.IO.StringReader(str)
   serializer.Deserialize(tr, typeof<'R>) :?> 'R
@@ -77,6 +82,10 @@ let toJson value =
   serializer.Serialize(tw, value)
   sb.ToString() 
 
+let (|Let|) v input = v, input
+
+let (|Lookup|_|) k map = Map.tryFind k map
+let (|NonEmpty|_|) v = if String.IsNullOrWhiteSpace(v) then None else Some v
 
 // --------------------------------------------------------------------------------------
 // Saving and loading snippets
@@ -91,9 +100,9 @@ type Snippet =
     author : string
     twitter : string
     link : string
-    compiled : string
     code : string 
-    source : string
+    version : string
+    config : string
     hidden : bool }
 
 type NewSnippet = 
@@ -130,8 +139,8 @@ let postSnippet (snip:NewSnippet) = async {
       title = snip.title; description = snip.description; 
       link = if String.IsNullOrWhiteSpace snip.link then null else snip.link
       twitter = if String.IsNullOrWhiteSpace snip.twitter then null else snip.twitter
-      author = snip.author; compiled = snip.compiled;
-      code = snip.code; source = snip.code; hidden = snip.hidden } }
+      author = snip.author; code = snip.code; config = snip.config; 
+      version = snip.version; hidden = snip.hidden } }
 
 type SnippetMessage = 
   | GetSnippet of int * AsyncReplyChannel<Snippet option>
@@ -188,6 +197,12 @@ let tags = MailboxProcessor.Start(fun inbox ->
       try return! loop DateTime.MinValue [||]
       with e -> printfn "Agent failed %A" e })
 
+let updateFileInfo (csv:CsvFile) = 
+  let data = toJson csv
+  Http.RequestString
+    ( "http://gallery-csv-service.azurewebsites.net/update", 
+      httpMethod="POST", body=HttpRequestBody.TextRequest data ) |> ignore
+  
 let uploadData data =
   try
     Http.RequestString
@@ -205,18 +220,9 @@ let uploadData data =
 
 type RecaptchaResponse = JsonProvider<"""{"success":true}""">
 
-#if INTERACTIVE
-#load "config.fs"
-let recaptchaSecret = Config.TheGammaRecaptcha
-#else
-let recaptchaSecret = Environment.GetEnvironmentVariable("RECAPTCHA_SECRET")
-#endif
-
 /// Validates that reCAPTCHA has been entered properly
 let validateRecaptcha form = async {
-  let formValue = form |> Seq.tryPick (fun (k, v) -> 
-      if k = "g-recaptcha-response" then v else None)
-  let response = defaultArg formValue ""
+  let response = match form with Lookup "g-recaptcha-response" re -> re | _ -> ""
   let! response = 
       Http.AsyncRequestString
         ( "https://www.google.com/recaptcha/api/siteverify", httpMethod="POST", 
@@ -225,17 +231,13 @@ let validateRecaptcha form = async {
 
 let error msg = 
   DotLiquid.page "error.html" msg >=> Writers.setStatus HttpCode.HTTP_400
-  
-let (|Lookup|_|) k map = Map.tryFind k map
-let (|NonEmpty|_|) v = if String.IsNullOrWhiteSpace(v) then None else Some v
-  
-let insertPage ctx = async {
+    
+let insertSnippetHandler form ctx = async {
   // Give up early if the reCAPTCHA was not correct
-  let! valid = validateRecaptcha ctx.request.form
+  let! valid = validateRecaptcha form
   if not valid then return! error """Human validation using ReCaptcha failed. Please ensure
     that your browser supports ReCaptcha and checkt the checkbox to verify you are a human.""" ctx
   else
-    let form = Map.ofSeq [ for k, v in ctx.request.form do if v.IsSome then yield k.ToLower(), v.Value ] 
     match form with
     | Lookup "title" (NonEmpty title) &
       Lookup "description" (NonEmpty descr) &
@@ -245,7 +247,7 @@ let insertPage ctx = async {
         let newSnip = 
           { title = title; description = descr; author = author;
             twitter = twitter.TrimStart('@'); link = link; compiled = ""; code = source;
-            hidden = false; config = ""; version = "0.0.6" } 
+            hidden = false; config = defaultArg (form.TryFind "config") ""; version = "" } 
         let! id = snippetAgent.PostAndAsyncReply(fun ch -> InsertSnippet(newSnip, ch))
         let url = sprintf "/%d/%s" id (Filters.cleanTitle title)
         return! Redirection.FOUND url ctx
@@ -253,7 +255,11 @@ let insertPage ctx = async {
         return! error """Some of the inputs for the snippet were not valid, but the client-side 
           checking did not catch that. If you have JavaScript enabled and did not try to trick us,
           please consider opening an issue!""" ctx }
-    
+
+let insertPage ctx = async {
+  let form = Map.ofSeq [ for k, v in ctx.request.form do if v.IsSome then yield k.ToLower(), v.Value ] 
+  return! insertSnippetHandler form ctx }
+
 // --------------------------------------------------------------------------------------
 // Create pages
 // --------------------------------------------------------------------------------------
@@ -285,6 +291,30 @@ let createPage = request (fun r ->
       UploadError = defaultArg (inputs.TryFind("upload-error")) "" }
 
   match inputs with
+  // Step 5: Submit a snippet!
+  | Lookup "nextstep" "step5" ->
+      let dstags = r.multiPartFields |> List.choose (function ("dstags", t) -> Some t | _ -> None) 
+      let settings, source = 
+        match inputs, dstags, model.UploadId, model.UploadPasscode with 
+        | Lookup "dstitle" (NonEmpty title) &
+          Lookup "dssource" (NonEmpty source) &
+          Lookup "dsdescription" (NonEmpty description), (NonEmpty _ :: _), 
+            NonEmpty id, NonEmpty passcode ->
+            let csv = 
+              { id = id; hidden = false; date = DateTime.Now; source = source; passcode = passcode
+                title = title.Replace("'", ""); description = description; tags =Array.ofList dstags }
+            updateFileInfo csv
+            let month = DateTime.Now.ToString("MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)
+            "", (model.VizSource.Replace("uploaded", sprintf "shared.'by date'.'%s'.'%s'" month csv.title))
+        | _, _, NonEmpty uploadId, _ -> 
+            sprintf """{ "providers": [ ["uploaded", "pivot", "https://gallery-csv-service.azurewebsites.net/providers/csv/%s"] ] }""" uploadId,
+            model.VizSource
+        | _ -> "", model.VizSource      
+      inputs 
+      |> Map.add "source" source
+      |> Map.add "config" settings
+      |> insertSnippetHandler
+
   // Step 4: Display page asking for snippet details
   | Lookup "nextstep" "step4" -> fun ctx -> async {
       let! tags = tags.PostAndAsyncReply id
@@ -319,12 +349,15 @@ let createPage = request (fun r ->
         match inputs with
         | Let true (uploaded, Lookup "uploadcsv" (NonEmpty data)) 
         | Let false (uploaded, Lookup "usepasted" _ & Lookup "uploaddata" (NonEmpty data)) -> 
+            printfn "uploading..."
             match uploadData data with
             | Choice2Of2 error -> 
+                printfn "error..."
                 { model with 
                     PastedData = data
                     UploadError = error }
             | Choice1Of2 csv ->
+                printfn "goo..."
                 { model with 
                     PastedData = if uploaded then "" else data
                     TransformSource = "uploaded\n  .'drop columns'.then\n  .'get the data'" 
@@ -358,7 +391,6 @@ let app = request (fun _ ->
   choose [
     path "/" >=> asyncPage "home.html" (snippetAgent.PostAndAsyncReply(fun ch -> ListSnippets(8, ch)))
     path "/create" >=> createPage
-    path "/new" >=> DotLiquid.page "new.html" null
     path "/form/insert" >=> insertPage
     path "/all" >=> asyncPage "home.html" (snippetAgent.PostAndAsyncReply(fun ch -> ListSnippets(Int32.MaxValue, ch)))
     pathScan "/%d/%s" (fun (id, _) ctx -> async {
