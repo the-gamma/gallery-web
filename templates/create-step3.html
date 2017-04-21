@@ -103,6 +103,7 @@
           "uploaded": g.providers.pivot("http://gallery-csv-service.azurewebsites.net/providers/csv/{{ model.UploadId }}"),
         {% endif %}
         "worldbank": g.providers.rest(services + "worldbank"),
+        "shared": g.providers.rest("https://gallery-csv-service.azurewebsites.net/providers/listing"),
         "olympics": g.providers.pivot(services + "pdata/olympics") });
         
     // Create context which is used to create editor & run code
