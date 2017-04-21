@@ -11,6 +11,7 @@ module OlympicsWeb
 
 open Suave
 open System
+open System.Text.RegularExpressions
 open Suave.Filters
 open Suave.Operators
 open Newtonsoft.Json
@@ -23,6 +24,59 @@ let asm, debug =
   else IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), false
 let root = IO.Path.GetFullPath(asm </> ".." </> "web")
 let templ = IO.Path.GetFullPath(asm </> ".." </> "templates")
+
+// --------------------------------------------------------------------------------------
+// Filters for the DotLiquid engine
+// --------------------------------------------------------------------------------------
+
+module Filters = 
+  open System.Text.RegularExpressions
+
+  let isHome (obj:System.Collections.IEnumerable) =
+    (obj |> Seq.cast<obj> |> Seq.length) <= 8
+  let jsEncode (s:string) = 
+    System.Web.HttpUtility.JavaScriptStringEncode s
+  let htmlEncode (s:string) = 
+    System.Web.HttpUtility.HtmlEncode s
+  let urlEncode (url:string) =
+    System.Web.HttpUtility.UrlEncode(url)
+  let mailEncode (url:string) =
+    urlEncode(url).Replace("+", "%20")
+  let cleanTitle (title:string) = 
+    let t = Regex.Replace(title.ToLower(), "[^a-z0-9 ]", "")
+    let t = Regex.Replace(t, " +", "-")
+    urlEncode t
+  let modTwo (n:int) = n % 2
+
+  let niceDate (dt:DateTime) =
+    let ts = DateTime.UtcNow - dt
+    if ts.TotalSeconds < 60.0 then sprintf "%d secs ago" (int ts.TotalSeconds)
+    elif ts.TotalMinutes < 60.0 then sprintf "%d mins ago" (int ts.TotalMinutes)
+    elif ts.TotalHours < 24.0 then sprintf "%d hours ago" (int ts.TotalHours)
+    elif ts.TotalHours < 48.0 then sprintf "yesterday"
+    elif ts.TotalDays < 30.0 then sprintf "%d days ago" (int ts.TotalDays)
+    elif ts.TotalDays < 365.0 then sprintf "%d months ago" (int ts.TotalDays / 30)
+    else sprintf "%d years ago" (int ts.TotalDays / 365)
+
+
+// --------------------------------------------------------------------------------------
+// Generally useful helpers
+// --------------------------------------------------------------------------------------
+
+let serializer = JsonSerializer.Create()
+
+let (|Let|) v input = v, input
+
+let fromJson<'R> str : 'R = 
+  use tr = new System.IO.StringReader(str)
+  serializer.Deserialize(tr, typeof<'R>) :?> 'R
+
+let toJson value = 
+  let sb = System.Text.StringBuilder()
+  use tw = new System.IO.StringWriter(sb)
+  serializer.Serialize(tw, value)
+  sb.ToString() 
+
 
 // --------------------------------------------------------------------------------------
 // Saving and loading snippets
@@ -53,18 +107,6 @@ type NewSnippet =
     hidden : bool
     config : string
     version : string }
-
-let serializer = JsonSerializer.Create()
-
-let fromJson<'R> str : 'R = 
-  use tr = new System.IO.StringReader(str)
-  serializer.Deserialize(tr, typeof<'R>) :?> 'R
-
-let toJson value = 
-  let sb = System.Text.StringBuilder()
-  use tw = new System.IO.StringWriter(sb)
-  serializer.Serialize(tw, value)
-  sb.ToString() 
 
 let readSnippets () = async {
   let! json = Http.AsyncRequestString("http://thegamma-snippets.azurewebsites.net/thegamma")
@@ -118,33 +160,44 @@ let snippetAgent = MailboxProcessor.Start(fun inbox ->
       with e -> printfn "Agent has failed: %A" e })
 
 // --------------------------------------------------------------------------------------
-// Filters for the DotLiquid engine
+// Uploading data using the CSV service
 // --------------------------------------------------------------------------------------
 
-module Filters = 
-  open System.Text.RegularExpressions
+type CsvFile = 
+  { id : string 
+    hidden : bool 
+    date : DateTime
+    source : string
+    title : string
+    description : string
+    tags : string[] 
+    passcode : string }
 
-  let isHome (obj:System.Collections.IEnumerable) =
-    (obj |> Seq.cast<obj> |> Seq.length) <= 8
-  let urlEncode (url:string) =
-    System.Web.HttpUtility.UrlEncode(url)
-  let mailEncode (url:string) =
-    urlEncode(url).Replace("+", "%20")
-  let cleanTitle (title:string) = 
-    let t = Regex.Replace(title.ToLower(), "[^a-z0-9 ]", "")
-    let t = Regex.Replace(t, " +", "-")
-    urlEncode t
-  let modTwo (n:int) = n % 2
+let tags = MailboxProcessor.Start(fun inbox ->
+  let rec loop (time:DateTime) tags = async {
+    if (DateTime.Now - time).TotalSeconds > 300. then
+      let! tags = Http.AsyncRequestString("http://gallery-csv-service.azurewebsites.net/tags", httpMethod="GET")
+      let tags = fromJson<string[][]> tags |> Array.map Array.last
+      return! loop DateTime.Now tags
+    else
+      let! (repl:AsyncReplyChannel<_>) = inbox.Receive()
+      repl.Reply(tags)
+      return! loop time tags }
+  async {
+    while true do 
+      try return! loop DateTime.MinValue [||]
+      with e -> printfn "Agent failed %A" e })
 
-  let niceDate (dt:DateTime) =
-    let ts = DateTime.UtcNow - dt
-    if ts.TotalSeconds < 60.0 then sprintf "%d secs ago" (int ts.TotalSeconds)
-    elif ts.TotalMinutes < 60.0 then sprintf "%d mins ago" (int ts.TotalMinutes)
-    elif ts.TotalHours < 24.0 then sprintf "%d hours ago" (int ts.TotalHours)
-    elif ts.TotalHours < 48.0 then sprintf "yesterday"
-    elif ts.TotalDays < 30.0 then sprintf "%d days ago" (int ts.TotalDays)
-    elif ts.TotalDays < 365.0 then sprintf "%d months ago" (int ts.TotalDays / 30)
-    else sprintf "%d years ago" (int ts.TotalDays / 365)
+let uploadData data =
+  try
+    Http.RequestString
+      ( "http://gallery-csv-service.azurewebsites.net/upload", 
+        httpMethod="POST", body=HttpRequestBody.TextRequest data)
+    |> fromJson<CsvFile>
+    |> Choice1Of2
+  with :? System.Net.WebException as e ->
+    let idx = e.Message.IndexOf("upload:")
+    Choice2Of2(if idx > -1 then e.Message.Substring(idx+7).Trim() else e.Message)
 
 // --------------------------------------------------------------------------------------
 // Insert page
@@ -202,6 +255,90 @@ let insertPage ctx = async {
           please consider opening an issue!""" ctx }
     
 // --------------------------------------------------------------------------------------
+// Create pages
+// --------------------------------------------------------------------------------------
+
+type CreateModel =
+  { PastedData : string 
+    TransformSource : string
+    DataTags : string[]
+    VizSource : string
+    ChartType : string
+    UploadId : string
+    UploadPasscode : string
+    UploadError : string }
+
+let createPage = request (fun r ->
+  let inputs = 
+    [ for f in r.files -> f.fieldName, System.IO.File.ReadAllText(f.tempFilePath) ]
+    |> Seq.append r.multiPartFields
+    |> Map.ofSeq 
+    
+  let model = 
+    { DataTags = [||]
+      VizSource = defaultArg (inputs.TryFind("viz-source")) "" 
+      TransformSource = defaultArg (inputs.TryFind("transform-source")) ""
+      ChartType = defaultArg (inputs.TryFind("chart-type")) "" 
+      PastedData = defaultArg (inputs.TryFind("pasted-data")) ""
+      UploadId = defaultArg (inputs.TryFind("upload-id")) ""
+      UploadPasscode = defaultArg (inputs.TryFind("upload-passcode")) ""
+      UploadError = defaultArg (inputs.TryFind("upload-error")) "" }
+
+  match inputs with
+  // Step 4: Display page asking for snippet details
+  | Lookup "nextstep" "step4" -> fun ctx -> async {
+      let! tags = tags.PostAndAsyncReply id
+      return! DotLiquid.page "create-step4.html" { model with DataTags = tags } ctx }
+  
+  // Step 3: Generate chart based on Step 2, or leave it as is when going back
+  | Lookup "nextstep" "step3" ->
+      let op = 
+        match model.ChartType with 
+        | "bar-chart" -> 
+            "chart.bar(data)\n" + 
+            "  .set(title=\"Enter chart title\", colors=[\"#77aae0\"])\n" + 
+            "  .set(fontName=\"Roboto\", fontSize=13)\n" + 
+            "  .legend(position=\"none\")"
+        | "line-chart" -> 
+            "chart.line(data.setProperties(seriesName=\"Enter data series description\"))\n" + 
+            "  .set(title=\"Enter chart title\", colors=[\"#5588e0\"])\n" + 
+            "  .set(fontName=\"Roboto\", fontSize=13)\n" +
+            "  .legend(position=\"bottom\")"
+        | _ -> 
+            "table.create(data)"
+      let model = 
+        if not (inputs.ContainsKey "gotoviz") && not (String.IsNullOrWhiteSpace model.VizSource) then model
+        else
+          let src = "let data =" + Regex.Replace("\n" + model.TransformSource.Trim(), "[\r\n]+", "\n  ") + "\n\n" + op
+          { model with VizSource = src }
+      DotLiquid.page "create-step3.html" model
+
+  // Step 2: Upload data from step 1 and display editor 
+  | Lookup "nextstep" "step2" ->
+      let model = 
+        match inputs with
+        | Let true (uploaded, Lookup "uploadcsv" (NonEmpty data)) 
+        | Let false (uploaded, Lookup "usepasted" _ & Lookup "uploaddata" (NonEmpty data)) -> 
+            match uploadData data with
+            | Choice2Of2 error -> 
+                { model with 
+                    PastedData = data
+                    UploadError = error }
+            | Choice1Of2 csv ->
+                { model with 
+                    PastedData = if uploaded then "" else data
+                    TransformSource = "uploaded\n  .'drop columns'.then\n  .'get the data'" 
+                    UploadId = csv.id; UploadPasscode = csv.passcode }                    
+        | Lookup "usesample" _ & Lookup "samplesource" (NonEmpty sample) -> 
+            { model with TransformSource = sample }
+        | _ -> model
+      if model.UploadError = "" then DotLiquid.page "create-step2.html" model 
+      else DotLiquid.page "create-step1.html" model 
+      
+  // Step 1: Display page for choosing inputs
+  | _ -> DotLiquid.page "create-step1.html" model )
+
+// --------------------------------------------------------------------------------------
 // Web server
 // --------------------------------------------------------------------------------------
 
@@ -220,8 +357,9 @@ let app = request (fun _ ->
   inits.Value
   choose [
     path "/" >=> asyncPage "home.html" (snippetAgent.PostAndAsyncReply(fun ch -> ListSnippets(8, ch)))
+    path "/create" >=> createPage
     path "/new" >=> DotLiquid.page "new.html" null
-    path "/insert" >=> insertPage
+    path "/form/insert" >=> insertPage
     path "/all" >=> asyncPage "home.html" (snippetAgent.PostAndAsyncReply(fun ch -> ListSnippets(Int32.MaxValue, ch)))
     pathScan "/%d/%s" (fun (id, _) ctx -> async {
       let! snip = snippetAgent.PostAndAsyncReply(fun ch -> GetSnippet(id, ch))

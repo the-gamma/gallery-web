@@ -20,7 +20,7 @@ Target "clean" (fun _ ->
 )
 
 Target "build" (fun _ ->
-  [ "thegamma-snippets-web.sln" ]
+  [ "gallery-web.sln" ]
   |> MSBuildRelease "" "Rebuild"
   |> Log ""
 )

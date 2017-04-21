@@ -1,7 +1,7 @@
 {% extends "default.html" %}
 
 {% block head %}
-<title>New snippet | The Gamma Snippets</title>
+<title>New snippet | The Gamma Gallery</title>
 <link href="https://thegamma.net/lib/thegamma/thegamma.css" rel="stylesheet">
 <script src='https://www.google.com/recaptcha/api.js'></script>
 {% endblock %}
@@ -27,7 +27,7 @@
   <div class="shadow" style="background:white;min-height:800px">
     
     <div class="tab-body" id="tab_body_1">
-      <form class="form-horizontal" name="insert-form" id="insert-form" action="/insert" onsubmit="return validateForm();" method="post">
+      <form class="form-horizontal" name="insert-form" id="insert-form" action="/form/insert" onsubmit="return validateForm();" method="post">
         <div class="form-group">
           <label for="title" class="col-sm-2 control-label">Title*</label>
           <div class="col-sm-10">

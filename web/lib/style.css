@@ -57,6 +57,47 @@ header a:hover h2 span, header a:hover h1 span {
 header a, header a:hover {
   text-decoration:none !important;
 }
+
+
+header.create {
+  padding:30px 0px 40px 0px;
+}
+header.create a h2 {
+  margin:0px 10px 30px 0px;
+}
+header.create a h2 span {
+  width:150px;
+  height:46px;
+  padding:4px 5px 4px 10px;
+  display:inline-block;
+}
+header.create a.passive:hover h2 span {
+  background:#F4C300;
+  cursor:default;
+}
+header.create a.selected h2 span {
+  cursor:default;
+  background:#EFD47C;
+}
+header.create a h2 span.arrow {
+  width:0px; 
+  padding:0px;
+  border-top: 23px solid transparent;
+  border-bottom: 23px solid transparent;
+  background:transparent;
+  position:relative;
+  top:16px;
+}
+header.create a h2 span.arrow, header.create a.passive:hover h2 span.arrow {
+  border-left:15px solid #F4C300;
+  background:transparent;
+}
+header.create a.selected h2 span.arrow, header.create a:hover h2 span.arrow {
+  border-left:15px solid #EFD47C;
+  background:transparent;
+}
+
+
 footer {
   background:url(https://thegamma.net/img/bg.png);
   padding:30px 0px 70px 0px;
@@ -223,6 +264,24 @@ header a {
   z-index:1001;
   padding:10px;
 }
+.tab-body h2 {
+  margin:20px 0px 10px 0px;
+}
+.tab-body label {
+  font:bold 15px 'Roboto',sans-serif;
+}
+.tab-body p, .tab-body li {
+  font:15px 'Roboto',sans-serif;
+  line-height:22px;
+  margin:10px 0px 10px 0px;
+} 
+.tab-body li {
+  margin:0px 0px 5px 20px;
+  list-style-type:disc;
+}
+.tab-body ul {
+  margin-bottom:5px;
+}
 .tabs {
   height:40px;
 }
@@ -245,6 +304,9 @@ header a {
   z-index:999;
   background:#f0f0f0;
 }
+.tab-inactive {
+  cursor:default;
+}
 .tab-sel {
   z-index:1000;
   background:white;
@@ -252,7 +314,7 @@ header a {
 form {
   padding-top:20px;
 }
-#submit {
+#submit, #goshare {
   margin-top:10px;
 }
 .form-group {
@@ -265,4 +327,7 @@ form {
   color:#ff0000;
   padding:3px 0px 0px 5px;
   display:none;
+}
+.tab-body .chosen-container li {
+  font:14px 'Roboto',sans-serif;
 }
