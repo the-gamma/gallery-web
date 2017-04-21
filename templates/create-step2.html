@@ -97,7 +97,7 @@
       g.providers.createProviders({ 
         "libraries": g.providers.library("https://thegamma.net/lib/thegamma-0.0.18/libraries.json"),
         {% if model.UploadId != "" %}
-          "uploaded": g.providers.pivot("http://gallery-csv-service.azurewebsites.net/providers/csv/{{ model.UploadId }}"),
+          "uploaded": g.providers.pivot("https://gallery-csv-service.azurewebsites.net/providers/csv/{{ model.UploadId }}"),
         {% endif %}
         "worldbank": g.providers.rest(services + "worldbank"),
         "shared": g.providers.rest("https://gallery-csv-service.azurewebsites.net/providers/listing"),
