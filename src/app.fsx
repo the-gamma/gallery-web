@@ -201,13 +201,15 @@ let updateFileInfo (csv:CsvFile) =
   let data = toJson csv
   Http.RequestString
     ( "http://gallery-csv-service.azurewebsites.net/update", 
-      httpMethod="POST", body=HttpRequestBody.TextRequest data ) |> ignore
+      httpMethod="POST", body=HttpRequestBody.TextRequest data,
+      headers = [HttpRequestHeaders.ContentType "charset=utf-8"] ) |> ignore
   
 let uploadData data =
   try
     Http.RequestString
       ( "http://gallery-csv-service.azurewebsites.net/upload", 
-        httpMethod="POST", body=HttpRequestBody.TextRequest data)
+        httpMethod="POST", body=HttpRequestBody.TextRequest data, 
+        headers = [HttpRequestHeaders.ContentType "charset=utf-8"] )
     |> fromJson<CsvFile>
     |> Choice1Of2
   with :? System.Net.WebException as e ->
@@ -349,15 +351,12 @@ let createPage = request (fun r ->
         match inputs with
         | Let true (uploaded, Lookup "uploadcsv" (NonEmpty data)) 
         | Let false (uploaded, Lookup "usepasted" _ & Lookup "uploaddata" (NonEmpty data)) -> 
-            printfn "uploading..."
             match uploadData data with
             | Choice2Of2 error -> 
-                printfn "error..."
                 { model with 
                     PastedData = data
                     UploadError = error }
             | Choice1Of2 csv ->
-                printfn "goo..."
                 { model with 
                     PastedData = if uploaded then "" else data
                     TransformSource = "uploaded\n  .'drop columns'.then\n  .'get the data'" 
