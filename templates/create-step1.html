@@ -30,7 +30,7 @@
 <div class="container">
   
 <div class="row"><div class="col-sm-12">
-  <div class="shadow" style="background:white;margin-bottom:100px">    
+  <div class="shadow" style="background:white;margin-bottom:100px;padding-bottom:50px">    
     <div class="tab-body" style="padding:20px">            
       <form name="create-form" id="create-form" action="/create" method="post" enctype="multipart/form-data">
       <input type="hidden" name="nextstep" id="nextstep" value="step2">
@@ -46,9 +46,8 @@
             <label for="samplesource">Use sample source</label>
             <p>If you just want to try The Gamma, you can select one of our sample data sources.
               After you choose the data source, you can modify the code to choose other indicators,
-              years or other kinds of aggregations. You can also find more sample data by browsing 
-              <a href="/all">the gallery</a>.            
-            </p>
+              years or other kinds of aggregations.</p>
+              
             <select class="form-control" name="samplesource" id="samplesource" style="margin:15px 0px 15px 0px">
               <option value="">Select a sample dataset</option>
               <optgroup label="Olympic medal statistics">
@@ -100,7 +99,11 @@
   .sortValues(reverse=true).take(15)">Healt expenditure (% of GDP) in 2010</option>
               </optgrouup>
             </select>
-            <button id="usesample" name="usesample" class="btn btn-success" style="margin-top:10px" disabled>Use sample data source &nbsp; <i class="fa fa-chevron-right"></i></button>            
+            <p>You can also find more sample data by browsing <a href="/all">the gallery</a>.
+              If you know what you're doing, you can also go directly to writing code!              
+            </p>
+            <button id="usesample" name="usesample" class="btn btn-success" style="margin-top:10px; width:200px" disabled>Use sample data source &nbsp; <i class="fa fa-chevron-right"></i></button>
+            <button id="skipsample" name="skipsample" class="btn btn-success" style="margin-top:10px; width:200px">Skip directly to editor &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <i class="fa fa-chevron-right"></i></button>
           </div>        
         </div>
         <div class="col-sm-8">

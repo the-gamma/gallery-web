@@ -347,24 +347,29 @@ let createPage = request (fun r ->
 
   // Step 2: Upload data from step 1 and display editor 
   | Lookup "nextstep" "step2" ->
-      let model = 
+      let skip, model = 
         match inputs with
         | Let true (uploaded, Lookup "uploadcsv" (NonEmpty data)) 
         | Let false (uploaded, Lookup "usepasted" _ & Lookup "uploaddata" (NonEmpty data)) -> 
             match uploadData data with
             | Choice2Of2 error -> 
+                false,
                 { model with 
                     PastedData = data
                     UploadError = error }
             | Choice1Of2 csv ->
+                false,
                 { model with 
                     PastedData = if uploaded then "" else data
                     TransformSource = "uploaded\n  .'drop columns'.then\n  .'get the data'" 
                     UploadId = csv.id; UploadPasscode = csv.passcode }                    
         | Lookup "usesample" _ & Lookup "samplesource" (NonEmpty sample) -> 
-            { model with TransformSource = sample }
-        | _ -> model
-      if model.UploadError = "" then DotLiquid.page "create-step2.html" model 
+            false, { model with TransformSource = sample }
+        | Lookup "skipsample" _ ->
+            true, { model with VizSource = "chart.line(series.values([1,2,0]))" }
+        | _ -> false, model
+      if skip then DotLiquid.page "create-step3.html" model 
+      elif model.UploadError = "" then DotLiquid.page "create-step2.html" model 
       else DotLiquid.page "create-step1.html" model 
       
   // Step 1: Display page for choosing inputs
