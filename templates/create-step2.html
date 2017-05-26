@@ -2,7 +2,7 @@
 
 {% block head %}
 <title>Aggregate and sumarize data | The Gamma Gallery</title>
-<link href="https://thegamma.net/lib/thegamma-0.0.18/thegamma.css" rel="stylesheet">
+<link href="https://thegamma.net/lib/thegamma-{{ model.CurrentVersion }}/thegamma.css" rel="stylesheet">
 <script src='https://www.google.com/recaptcha/api.js'></script>
 {% endblock %}
 
@@ -82,20 +82,20 @@
   integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
   integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-<script src="https://thegamma.net/lib/thegamma-0.0.18/babel.min.js"></script>
-<script src="https://thegamma.net/lib/thegamma-0.0.18/require.js"></script>
+<script src="https://thegamma.net/lib/thegamma-{{ model.CurrentVersion }}/babel.min.js"></script>
+<script src="https://thegamma.net/lib/thegamma-{{ model.CurrentVersion }}/require.js"></script>
 <script>
   require.config({
-    paths:{'vs':'https://thegamma.net/lib/thegamma-0.0.18/vs'},
+    paths:{'vs':'https://thegamma.net/lib/thegamma-{{ model.CurrentVersion }}/vs'},
     map:{ "*":{"monaco":"vs/editor/editor.main"}}
   });
 
   var editor;
-  require(["monaco", "https://thegamma.net/lib/thegamma-0.0.18/thegamma.js"], function (_, g) {      
+  require(["monaco", "https://thegamma.net/lib/thegamma-{{ model.CurrentVersion }}/thegamma.js"], function (_, g) {      
     var services = "https://thegamma-services.azurewebsites.net/";      
     var providers = 
       g.providers.createProviders({ 
-        "libraries": g.providers.library("https://thegamma.net/lib/thegamma-0.0.18/libraries.json"),
+        "libraries": g.providers.library("https://thegamma.net/lib/thegamma-{{ model.CurrentVersion }}/libraries.json"),
         {% if model.UploadId != "" %}
           "uploaded": g.providers.pivot("https://gallery-csv-service.azurewebsites.net/providers/csv/{{ model.UploadId }}"),
         {% endif %}

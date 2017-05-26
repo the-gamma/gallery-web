@@ -57,7 +57,8 @@ module Filters =
 
   let niceDate (dt:DateTime) =
     let ts = DateTime.UtcNow - dt
-    if ts.TotalSeconds < 60.0 then sprintf "%d secs ago" (int ts.TotalSeconds)
+    if ts.TotalSeconds < 0.0 then "just now"
+    elif ts.TotalSeconds < 60.0 then sprintf "%d secs ago" (int ts.TotalSeconds)
     elif ts.TotalMinutes < 60.0 then sprintf "%d mins ago" (int ts.TotalMinutes)
     elif ts.TotalHours < 24.0 then sprintf "%d hours ago" (int ts.TotalHours)
     elif ts.TotalHours < 48.0 then sprintf "yesterday"
@@ -81,7 +82,7 @@ let toJson value =
   use tw = new System.IO.StringWriter(sb)
   serializer.Serialize(tw, value)
   sb.ToString() 
-
+  
 let (|Let|) v input = v, input
 
 let (|Lookup|_|) k map = Map.tryFind k map
@@ -117,6 +118,14 @@ type NewSnippet =
     config : string
     version : string }
 
+let mutable currentVersion = 
+  Http.RequestString("http://thegamma.net/lib/latest.txt")
+
+let updateCurrentVersion ctx = async {
+  let! v = Http.AsyncRequestString("http://thegamma.net/lib/latest.txt")
+  currentVersion <- v 
+  return Some ctx }
+
 let readSnippets () = async {
   let! json = Http.AsyncRequestString("http://thegamma-snippets.azurewebsites.net/thegamma")
   let snips = 
@@ -135,7 +144,7 @@ let postSnippet (snip:NewSnippet) = async {
         httpMethod="POST",
         body=HttpRequestBody.TextRequest(toJson snip) )
   return 
-    { Snippet.id = int id; likes = 0; posted = DateTime.Now;
+    { Snippet.id = int id; likes = 0; posted = DateTime.UtcNow;
       title = snip.title; description = snip.description; 
       link = if String.IsNullOrWhiteSpace snip.link then null else snip.link
       twitter = if String.IsNullOrWhiteSpace snip.twitter then null else snip.twitter
@@ -246,10 +255,11 @@ let insertSnippetHandler form ctx = async {
       Lookup "source" (NonEmpty source) &
       Lookup "author" (NonEmpty author) &
       Lookup "link" link & Lookup "twitter" twitter ->
+        let version = defaultArg (form.TryFind("version")) currentVersion
         let newSnip = 
           { title = title; description = descr; author = author;
             twitter = twitter.TrimStart('@'); link = link; compiled = ""; code = source;
-            hidden = false; config = defaultArg (form.TryFind "config") ""; version = "" } 
+            hidden = false; config = defaultArg (form.TryFind "config") ""; version = version } 
         let! id = snippetAgent.PostAndAsyncReply(fun ch -> InsertSnippet(newSnip, ch))
         let url = sprintf "/%d/%s" id (Filters.cleanTitle title)
         return! Redirection.FOUND url ctx
@@ -274,9 +284,10 @@ type CreateModel =
     ChartType : string
     UploadId : string
     UploadPasscode : string
-    UploadError : string }
+    UploadError : string 
+    CurrentVersion : string }
 
-let createPage = request (fun r ->
+let createPage = updateCurrentVersion >=> request (fun r ->
   let inputs = 
     [ for f in r.files -> f.fieldName, System.IO.File.ReadAllText(f.tempFilePath) ]
     |> Seq.append r.multiPartFields
@@ -290,7 +301,8 @@ let createPage = request (fun r ->
       PastedData = defaultArg (inputs.TryFind("pasted-data")) ""
       UploadId = defaultArg (inputs.TryFind("upload-id")) ""
       UploadPasscode = defaultArg (inputs.TryFind("upload-passcode")) ""
-      UploadError = defaultArg (inputs.TryFind("upload-error")) "" }
+      UploadError = defaultArg (inputs.TryFind("upload-error")) ""
+      CurrentVersion = currentVersion  }
 
   match inputs with
   // Step 5: Submit a snippet!
@@ -303,10 +315,10 @@ let createPage = request (fun r ->
           Lookup "dsdescription" (NonEmpty description), (NonEmpty _ :: _), 
             NonEmpty id, NonEmpty passcode ->
             let csv = 
-              { id = id; hidden = false; date = DateTime.Now; source = source; passcode = passcode
-                title = title.Replace("'", ""); description = description; tags =Array.ofList dstags }
+              { id = id; hidden = false; date = DateTime.UtcNow; source = source; passcode = passcode
+                title = title.Replace("'", ""); description = description; tags = Array.ofList dstags }
             updateFileInfo csv
-            let month = DateTime.Now.ToString("MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)
+            let month = DateTime.UtcNow.ToString("MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)
             "", (model.VizSource.Replace("uploaded", sprintf "shared.'by date'.'%s'.'%s'" month csv.title))
         | _, _, NonEmpty uploadId, _ -> 
             sprintf """{ "providers": [ ["uploaded", "pivot", "https://gallery-csv-service.azurewebsites.net/providers/csv/%s"] ] }""" uploadId,
@@ -394,9 +406,9 @@ let app = request (fun _ ->
   inits.Value
   choose [
     path "/" >=> asyncPage "home.html" (snippetAgent.PostAndAsyncReply(fun ch -> ListSnippets(8, ch)))
-    path "/create" >=> createPage
-    path "/form/insert" >=> insertPage
     path "/all" >=> asyncPage "home.html" (snippetAgent.PostAndAsyncReply(fun ch -> ListSnippets(Int32.MaxValue, ch)))
+    path "/create" >=> createPage
+    path "/insert" >=> insertPage
     pathScan "/%d/%s" (fun (id, _) ctx -> async {
       let! snip = snippetAgent.PostAndAsyncReply(fun ch -> GetSnippet(id, ch))
       match snip with 

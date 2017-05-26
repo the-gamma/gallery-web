@@ -14,7 +14,7 @@
 <meta name="twitter:image" content="https://thegamma.net/img/logo.png" />  
 <title>{{ model.title }} | The Gamma Gallery</title>
 
-<link href="https://thegamma.net/lib/thegamma-0.0.18/thegamma.css" rel="stylesheet">
+<link href="https://thegamma.net/lib/thegamma-{{ model.version }}/thegamma.css" rel="stylesheet">
 <script src='https://www.google.com/recaptcha/api.js'></script>
 {% endblock %}
 
@@ -68,6 +68,7 @@
     
     <div class="tab-body" id="tab_body_1" style="display:none">
       <form class="form-horizontal" name="insert-form" id="insert-form" action="/insert" onsubmit="return validateForm();" method="post">
+        <input type="hidden" name="version" value="{{ model.version }}" />
         <div class="form-group">
           <label for="title" class="col-sm-2 control-label">Title*</label>
           <div class="col-sm-10">
@@ -130,7 +131,7 @@
 &lt;div class="thegamma" id="s{{ model.id }}"&gt;&lt;/div&gt;
 
 &lt;script type="text/javascript"&gt;
-if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-0.0.18/";
+if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-{{ model.version }}/";
 ["//www.google.com/jsapi",tg+"babel.min.js",tg+"core-js.min.js",tg+"require.js",tg+"embed.js"].
  forEach(function(u) { document.write('&lt;sc'+'ript type="text/javascript" src="'+u+'"&gt;&lt;/sc'+'ript&gt;'); }); 
 } thegamma.push("s{{ model.id }}");
@@ -152,11 +153,11 @@ if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-0.0.18/";
   integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
   integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-<script src="https://thegamma.net/lib/thegamma-0.0.18/babel.min.js"></script>
-<script src="https://thegamma.net/lib/thegamma-0.0.18/require.js"></script>
+<script src="https://thegamma.net/lib/thegamma-{{ model.version }}/babel.min.js"></script>
+<script src="https://thegamma.net/lib/thegamma-{{ model.version }}/require.js"></script>
 <script>
   require.config({
-    paths:{'vs':'https://thegamma.net/lib/thegamma-0.0.18/vs'},
+    paths:{'vs':'https://thegamma.net/lib/thegamma-{{ model.version }}/vs'},
     map:{ "*":{"monaco":"vs/editor/editor.main"}}
   });
 
@@ -189,10 +190,10 @@ if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-0.0.18/";
   }
 
   
-  require(["monaco", "https://thegamma.net/lib/thegamma-0.0.18/thegamma.js"], function (_, g) {      
+  require(["monaco", "https://thegamma.net/lib/thegamma-{{ model.version }}/thegamma.js"], function (_, g) {      
     var services = "https://thegamma-services.azurewebsites.net/";      
     var provspec = 
-      { "libraries": g.providers.library("https://thegamma.net/lib/thegamma-0.0.18/libraries.json"),
+      { "libraries": g.providers.library("https://thegamma.net/lib/thegamma-{{ model.version }}/libraries.json"),
         "worldbank": g.providers.rest(services + "worldbank"),
         "shared": g.providers.rest("https://gallery-csv-service.azurewebsites.net/providers/listing"),
         "expenditure": g.providers.rest("https://govuk-expenditure.azurewebsites.net/expenditure"),
