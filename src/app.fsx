@@ -409,6 +409,11 @@ let app = request (fun _ ->
     path "/all" >=> asyncPage "home.html" (snippetAgent.PostAndAsyncReply(fun ch -> ListSnippets(Int32.MaxValue, ch)))
     path "/create" >=> createPage
     path "/insert" >=> insertPage
+    pathScan "/%d/%s/embed" (fun (id, _) ctx -> async {
+      let! snip = snippetAgent.PostAndAsyncReply(fun ch -> GetSnippet(id, ch))
+      match snip with 
+      | Some snip -> return! ctx |> DotLiquid.page "embed.html" snip
+      | _ -> return! ctx |> (DotLiquid.page "404.html" null >=> Writers.setStatus HttpCode.HTTP_404) })
     pathScan "/%d/%s" (fun (id, _) ctx -> async {
       let! snip = snippetAgent.PostAndAsyncReply(fun ch -> GetSnippet(id, ch))
       match snip with 
