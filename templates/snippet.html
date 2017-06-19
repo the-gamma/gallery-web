@@ -199,6 +199,7 @@ if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-{{ model.
       { "libraries": g.providers.library("https://thegamma.net/lib/thegamma-{{ model.version }}/libraries.json"),
         "worldbank": g.providers.rest(services + "worldbank"),
         "shared": g.providers.rest("https://gallery-csv-service.azurewebsites.net/providers/listing"),
+        "web": g.providers.rest("https://gallery-csv-service.azurewebsites.net/providers/data"),
         "expenditure": g.providers.rest("https://govuk-expenditure.azurewebsites.net/expenditure"),
         "olympics": g.providers.pivot(services + "pdata/olympics") };
     var config = "{{ model.config | jsEncode }}";
