@@ -6,12 +6,12 @@
 <meta property="og:title" content="{{ model.title }}" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://snippets.thegamma.net/{{ model.id }}/{{ model.title | cleanTitle }}" />
-<meta property="og:image" content="https://thegamma.net/img/logo.png" />  
+<meta property="og:image" content="https://thegamma.net/img/logo.png" />
 <meta name="twitter:card" content="summary" />
 <meta name="twitter:site" content="@thegamma_net" />
 <meta name="twitter:title" content="{{ model.title }}" />
 <meta name="twitter:description" content="{{ model.description }}" />
-<meta name="twitter:image" content="https://thegamma.net/img/logo.png" />  
+<meta name="twitter:image" content="https://thegamma.net/img/logo.png" />
 <title>{{ model.title }} | The Gamma Gallery</title>
 
 <link href="https://thegamma.net/lib/thegamma-{{ model.version }}/thegamma.css" rel="stylesheet">
@@ -34,10 +34,10 @@
   </div>
 </div>
 </header>
-  
+
 <article>
 <div class="container">
-  
+
 <div class="row thegamma">
   <div class="col-md-1"></div>
   <div class="col-md-10">
@@ -51,7 +51,7 @@
   </div>
   <div class="col-md-1"></div>
 </div>
-  
+
 <div class="row" style="margin-top:50px"><div class="col-sm-12">
   <div class="tabs">
     <div class="tab-sel tab" id="tab_0" onclick="switchTabs(0);"><i class="fa fa-code"></i> Edit the snippet</div>
@@ -59,13 +59,13 @@
     <div class="tab" id="tab_2" onclick="switchTabs(2);"><i class="fa fa-share-alt"></i> Embed the snippet</div>
   </div>
   <div class="shadow" style="background:white;min-height:800px">
-    
+
     <div class="tab-body thegamma" id="tab_body_0">
       <div id="ed1"></div>
       <div id="ed1-errors" class="errors"></div>
       <div style="padding:20px 0px 0px 10px"><button id="run" class="btn btn-success">Run snippet</button></div>
     </div>
-    
+
     <div class="tab-body" id="tab_body_1" style="display:none">
       <form class="form-horizontal" name="insert-form" id="insert-form" action="/insert" onsubmit="return validateForm();" method="post">
         <input type="hidden" name="version" value="{{ model.version }}" />
@@ -108,7 +108,7 @@
           <div class="col-sm-10">
             <input type="text" class="form-control" id="link" name="link" placeholder="https://...">
           </div>
-        </div>        
+        </div>
         <div class="form-group submit-group">
           <div class="col-sm-offset-2 col-sm-10">
             <div class="recaptcha" style="float:right">
@@ -119,10 +119,10 @@
           <div class="col-sm-offset-2 col-sm-10">
             <button type="submit" id="submit" name="submit" value="Share snippet" class="btn btn-success">Share snippet</button>
           </div>
-        </div>          
+        </div>
       </form>
     </div>
-    
+
     <div class="tab-body" id="tab_body_2" style="display:none;padding:30px">
       <textarea readonly="readonly" class="form-control" rows="5" style="width:100%;font:11pt Inconsolata" id="embedcode">
 &lt;script type="text/thegamma" id="s{{ model.id }}-code"&gt;
@@ -133,17 +133,17 @@
 &lt;script type="text/javascript"&gt;
 if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-{{ model.version }}/";
 ["//www.google.com/jsapi",tg+"babel.min.js",tg+"core-js.min.js",tg+"require.js",tg+"embed.js"].
- forEach(function(u) { document.write('&lt;sc'+'ript type="text/javascript" src="'+u+'"&gt;&lt;/sc'+'ript&gt;'); }); 
+ forEach(function(u) { document.write('&lt;sc'+'ript type="text/javascript" src="'+u+'"&gt;&lt;/sc'+'ript&gt;'); });
 } thegamma.push("s{{ model.id }}");
 &lt;/script&gt;</textarea>
-    <p style="color:#808080; margin-top:20px">We can generate a 
+    <p style="color:#808080; margin-top:20px">We can generate a
       <a href="/{{ model.id }}/{{ model.title | cleanTitle }}/embed">minimal page with the embedded snippet</a>
       for you. This is just a sample and contains no other styling.</p>
-    <p style="color:#808080">To embed the snippet on your web page, just copy &amp; paste the   
+    <p style="color:#808080">To embed the snippet on your web page, just copy &amp; paste the
       above HTML code into your web page. The first part includes the code of the snippet. You can
       modify this later if you wish. The second part loads The Gamma and needs to be included at
       least once per page. For most efficient loading, put it at the end of your document. If
-      you need more control, you can use <a href="https://thegamma.net/developers/">The Gamma as a 
+      you need more control, you can use <a href="https://thegamma.net/developers/">The Gamma as a
       stand-alone JavaScript component</a>.</p>
     </div>
   </div>
@@ -152,9 +152,9 @@ if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-{{ model.
 </div>
 </article>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.js" 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.js"
   integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
   integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 <script src="https://thegamma.net/lib/thegamma-{{ model.version }}/babel.min.js"></script>
 <script src="https://thegamma.net/lib/thegamma-{{ model.version }}/require.js"></script>
@@ -165,7 +165,7 @@ if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-{{ model.
   });
 
   var editor;
-  
+
   function validateForm() {
     document.getElementById("source").value = editor.getValue();
     var elems = ["title","description","source","author"];
@@ -180,46 +180,48 @@ if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-{{ model.
     document.getElementById("human_error").style.display = reValid ? "none" : "block";
     return valid;
   }
-  
+
   function switchTabs(idx) {
     for(var i=0; i<=2; i++) document.getElementById("tab_" + i).className = "tab";
     for(var i=0; i<=2; i++) document.getElementById("tab_body_" + i).style.display = "none";
     document.getElementById("tab_body_" + idx).style.display = "block";
     document.getElementById("tab_" + idx).className = "tab-sel tab";
     document.getElementById("source").value = editor.getValue();
-    
+
     var ea = document.getElementById("embedcode");
     if (ea && idx==2) { ea.style.height = (ea.scrollHeight + 10) + "px"; }
   }
 
-  
-  require(["monaco", "https://thegamma.net/lib/thegamma-{{ model.version }}/thegamma.js"], function (_, g) {      
-    var services = "https://thegamma-services.azurewebsites.net/";      
-    var provspec = 
+
+  require(["monaco", "https://thegamma.net/lib/thegamma-{{ model.version }}/thegamma.js"], function (_, g) {
+    var services = "https://thegamma-services.azurewebsites.net/";
+    var graphServices = "https://thegamma-graph-service.azurewebsites.net/";
+    var provspec =
       { "libraries": g.providers.library("https://thegamma.net/lib/thegamma-{{ model.version }}/libraries.json"),
         "worldbank": g.providers.rest(services + "worldbank"),
         "shared": g.providers.rest("https://gallery-csv-service.azurewebsites.net/providers/listing"),
         "web": g.providers.rest("https://gallery-csv-service.azurewebsites.net/providers/data"),
         "expenditure": g.providers.rest("https://govuk-expenditure.azurewebsites.net/expenditure"),
+        "drWho": g.providers.rest(graphServices + "drWho"),
         "olympics": g.providers.pivot(services + "pdata/olympics") };
     var config = "{{ model.config | jsEncode }}";
-    if (config.length > 0) 
+    if (config.length > 0)
       JSON.parse(config).providers.forEach(function(p) {
         if (p[1] == "pivot") provspec[p[0]] = g.providers.pivot(p[2]);
         if (p[1] == "rest") provspec[p[0]] = g.providers.rest(p[2]);
       });
     console.log(provspec);
     var providers = g.providers.createProviders(provspec);
-        
+
     // Create context which is used to create editor & run code
     var ctx = g.gamma.createContext(providers);
-    ctx.errorsReported(function (errs) { 
-      var lis = errs.slice(0, 5).map(function (e) { 
+    ctx.errorsReported(function (errs) {
+      var lis = errs.slice(0, 5).map(function (e) {
         return $("<li>")
           .append($("<span class='err'>error " + e.number + "</span>"))
           .append($("<span class='loc'>at line " + e.startLine + " col " + e.startColumn + "</span>"))
-          .append(": " + e.message);          
-      });        
+          .append(": " + e.message);
+      });
       var ul = $("<ul>").append(lis);
       $("#ed1-errors").empty().append(ul);
     });
@@ -228,7 +230,7 @@ if (!thegamma) { var thegamma=[],tg="https://thegamma.net/lib/thegamma-{{ model.
     var demo = document.getElementById("demo");
     var code = demo == null ? 'placeholder.create("Add the source code for your visualization!")' : demo.innerText;
     if (demo != null) ctx.evaluate(code, "out1");
-    
+
     // Setup handler for run button
     document.getElementById("run").onclick = function() {
       ctx.evaluate(editor.getValue(), "out1");
